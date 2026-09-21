@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestion des revenus et dépenses</title>
+    <style>
+      :root {
+        --bg: #f4f7fb;
+        --panel: #ffffff;
+        --primary: #1d4ed8;
+        --primary-soft: #dbeafe;
+        --success: #16a34a;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --text: #1f2937;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background: linear-gradient(135deg, #eef4ff, #f9fbff 40%, #f5f6f8);
+        color: var(--text);
+      }
+
+      .container {
+        max-width: 1300px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      h1 {
+        margin: 0 0 20px;
+        text-align: center;
+        color: var(--text);
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+        padding: 20px;
+        margin-bottom: 22px;
+      }
+
+      .main-app {
+        display: block;
+      }
+
+      .trash-page {
+        display: none;
+      }
+
+      .header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 20px;
+      }
+
+      .header-row h1 {
+        margin: 0;
+        text-align: left;
+      }
+
+      .logout-btn {
+        background: linear-gradient(135deg, #374151, #111827);
+        box-shadow: none;
+      }
+
+      .login-screen {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(15, 23, 42, 0.72);
+        backdrop-filter: blur(4px);
+        z-index: 20;
+      }
+
+      .login-box {
+        width: min(420px, 90vw);
+        background: #fff;
+        border-radius: 18px;
+        padding: 28px 24px;
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.25);
+      }
+
+      .login-box h2 {
+        margin: 0 0 10px;
+        text-align: center;
+        color: var(--text);
+      }
+
+      .login-subtitle {
+        text-align: center;
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+      }
+
+      .mode-toggle {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+
+      .mode-btn {
+        padding: 10px 8px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: #f8fafc;
+        color: var(--text);
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      .mode-btn.active {
+        background: var(--primary-soft);
+        border-color: var(--primary);
+        color: var(--primary);
+      }
+
+      .login-form {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .login-form input,
+      .login-form select {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        font-size: 0.95rem;
+      }
+
+      .login-form input:focus {
+        outline: 2px solid var(--primary-soft);
+        border-color: var(--primary);
+      }
+
+      .login-message {
+        min-height: 20px;
+        font-size: 0.85rem;
+        color: var(--danger);
+        text-align: center;
+      }
+
+      body:not(.logged-in) .container {
+        opacity: 0.2;
+        filter: blur(3px);
+        pointer-events: none;
+        user-select: none;
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 14px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .field label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--muted);
+      }
+
+      .field input {
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: #fff;
+        font-size: 0.95rem;
+      }
+
+      .field input:focus {
+        outline: 2px solid var(--primary-soft);
+        border-color: var(--primary);
+      }
+
+      .btn-row {
+        display: flex;
+        justify-content: flex-end;
+        align-items: end;
+        margin-top: 8px;
+      }
+
+      button {
+        border: none;
+        background: linear-gradient(135deg, var(--primary), #2563eb);
+        color: white;
+        padding: 12px 18px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 0.95rem;
+        font-weight: 700;
+        box-shadow: 0 6px 10px rgba(37, 99, 235, 0.18);
+      }
+
+      button.secondary {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        box-shadow: 0 6px 10px rgba(239, 68, 68, 0.18);
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+      }
+
+      .stat-card {
+        background: #f8fafc;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 16px;
+      }
+
+      .stat-card .label {
+        color: var(--muted);
+        font-size: 0.8rem;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        font-weight: 700;
+      }
+
+      .stat-card .value {
+        font-size: 1.5rem;
+        font-weight: 800;
+      }
+
+      .stat-card.income .value { color: var(--success); }
+      .stat-card.expense .value { color: var(--danger); }
+      .stat-card.saving .value { color: var(--warning); }
+      .stat-card.net .value { color: var(--primary); }
+
+      .table-wrap {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1200px;
+      }
+
+      thead th {
+        background: #eff6ff;
+        color: var(--text);
+        font-size: 0.82rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        padding: 12px 10px;
+        border: 1px solid var(--line);
+      }
+
+      tbody td {
+        padding: 10px 8px;
+        border: 1px solid var(--line);
+        text-align: center;
+        font-size: 0.92rem;
+      }
+
+      tbody tr:nth-child(even) {
+        background: #fafafa;
+      }
+
+      .action-btn {
+        border: none;
+        background: transparent;
+        color: var(--danger);
+        font-size: 1.15rem;
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      .mini-table {
+        overflow-x: auto;
+      }
+
+      .mini-table table {
+        min-width: 420px;
+      }
+
+      .chart-box {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .charts-layout {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 20px;
+      }
+
+      .chart {
+        height: 240px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 30px;
+        padding: 20px 10px 10px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: linear-gradient(180deg, #fff, #f8fafc);
+      }
+
+      .donut-wrap {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: linear-gradient(180deg, #fff, #f8fafc);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 240px;
+        padding: 16px;
+      }
+
+      .donut {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        position: relative;
+        background: conic-gradient(
+          #16a34a 0 40%,
+          #ef4444 40% 70%,
+          #f59e0b 70% 100%
+        );
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+      }
+
+      .donut::after {
+        content: "";
+        position: absolute;
+        inset: 28px;
+        background: white;
+        border-radius: 50%;
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,0.04);
+      }
+
+      .donut-center {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        color: var(--text);
+        z-index: 1;
+        font-size: 0.85rem;
+      }
+
+      .bar-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        width: 120px;
+        height: 100%;
+        gap: 10px;
+      }
+
+      .bar {
+        width: 82px;
+        min-height: 20px;
+        border-radius: 12px 12px 0 0;
+        transition: height 0.3s ease;
+        position: relative;
+      }
+
+      .bar.income { background: linear-gradient(180deg, #34d399, #16a34a); }
+      .bar.expense { background: linear-gradient(180deg, #fda4af, #ef4444); }
+      .bar.saving { background: linear-gradient(180deg, #fcd34d, #f59e0b); }
+
+      .bar-value {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--text);
+      }
+
+      .legend {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+
+      .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+        color: var(--muted);
+        font-weight: 700;
+      }
+
+      .trash-table {
+        overflow-x: auto;
+      }
+
+      .trash-table table {
+        min-width: 900px;
+      }
+
+      .trash-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 16px;
+      }
+
+      .restore-btn {
+        border: none;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+
+      .dot.income { background: #16a34a; }
+      .dot.expense { background: #ef4444; }
+      .dot.saving { background: #f59e0b; }
+
+      @media (max-width: 700px) {
+        .container { padding: 14px; }
+        .panel { padding: 14px; }
+        .btn-row { justify-content: stretch; }
+        .btn-row button { width: 100%; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="loginScreen" class="login-screen">
+      <div class="login-box">
+        <h2> Asma</h2>
+        <div class="login-subtitle">Accès réservé à ta gestion financière</div>
+
+        <div class="mode-toggle">
+          <button type="button" class="mode-btn active" data-mode="login">J’ai déjà un compte</button>
+          <button type="button" class="mode-btn" data-mode="signup">Créer un compte</button>
+        </div>
+
+        <form id="loginForm" class="login-form">
+          <input id="fullName" type="text" placeholder="Nom complet" autocomplete="name" />
+          <select id="existingAccounts" style="display:none;"></select>
+          <input id="username" type="text" placeholder="Nom d'utilisateur" autocomplete="username" required />
+          <input id="password" type="password" placeholder="Mot de passe" autocomplete="current-password" required />
+          <input id="confirmPassword" type="password" placeholder="Confirmer le mot de passe" autocomplete="new-password" style="display:none;" />
+          <button type="submit">Se connecter</button>
+          <div id="loginMessage" class="login-message"></div>
+        </form>
+      </div>
+    </div>
+
+    <div id="mainApp" class="main-app">
+      <div class="container">
+        <div class="header-row">
+          <h1>Gestion des revenus et dépenses </h1>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <button id="trashBtn" type="button" class="secondary">Corbeille</button>
+            <button id="logoutBtn" class="logout-btn" type="button">Déconnexion</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <form id="entryForm">
+            <div class="form-grid">
+              <div class="field">
+                <label for="date">Date</label>
+                <input id="date" type="date" required />
+              </div>
+              <div class="field">
+                <label for="revenueDollar">Revenu en $</label>
+                <input id="revenueDollar" type="number" min="0" step="0.01" placeholder="0" />
+              </div>
+              <div class="field">
+                <label for="revenueSL">Revenu en SL</label>
+                <input id="revenueSL" type="number" min="0" step="0.01" placeholder="0" />
+              </div>
+              <div class="field">
+                <label for="revenueFGN">Revenu en FGN</label>
+                <input id="revenueFGN" type="number" min="0" step="0.01" placeholder="0" />
+              </div>
+              <div class="field">
+                <label for="expense">Dépense</label>
+                <input id="expense" type="number" min="0" step="0.01" placeholder="0" />
+              </div>
+              <div class="field">
+                <label for="dailySavings">Épargne quotidienne</label>
+                <input id="dailySavings" type="number" min="0" step="0.01" placeholder="0" />
+              </div>
+            </div>
+
+            <div class="btn-row">
+              <button type="submit">Ajouter</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="panel stats">
+          <div class="stat-card income">
+            <div class="label">Total revenus en $</div>
+            <div class="value" id="totalRevenueDollarValue">0.00 $</div>
+          </div>
+          <div class="stat-card income">
+            <div class="label">Total revenus en SL</div>
+            <div class="value" id="totalRevenueSLValue">0.00 SL</div>
+          </div>
+          <div class="stat-card income">
+            <div class="label">Total revenus en FGN</div>
+            <div class="value" id="totalRevenueFGNValue">0.00 FGN</div>
+          </div>
+          <div class="stat-card expense">
+            <div class="label">Total dépenses (SL)</div>
+            <div class="value" id="totalExpenseValue">0.00 SL</div>
+          </div>
+          <div class="stat-card saving">
+            <div class="label">Total épargne (SL)</div>
+            <div class="value" id="totalSavingValue">0.00 SL</div>
+          </div>
+          <div class="stat-card net">
+            <div class="label">Solde net (SL)</div>
+            <div class="value" id="netBalanceValue">0.00 SL</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Revenu en $</th>
+                  <th>Revenu en SL</th>
+                  <th>Revenu en FGN</th>
+                  <th>Total revenu en $</th>
+                  <th>Total revenu en SL</th>
+                  <th>Total revenu en FGN</th>
+                  <th>Dépense (SL)</th>
+                  <th>Épargne quotidienne (SL)</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2 style="margin-top:0;">Total des derniers montants</h2>
+          <div class="mini-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Total revenus en $</th>
+                  <th>Total revenus en SL</th>
+                  <th>Total revenus en FGN</th>
+                  <th>Total dépenses (SL)</th>
+                  <th>Total épargne (SL)</th>
+                  <th>Solde net (SL)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td id="summaryRevenueDollar">0.00 $</td>
+                  <td id="summaryRevenueSL">0.00 SL</td>
+                  <td id="summaryRevenueFGN">0.00 FGN</td>
+                  <td id="summaryExpense">0.00 SL</td>
+                  <td id="summarySaving">0.00 SL</td>
+                  <td id="summaryNet">0.00 SL</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel chart-box">
+          <h2 style="margin: 0;">Diagramme des entrées et sorties</h2>
+          <div class="charts-layout">
+            <div class="chart" id="chart"></div>
+            <div class="donut-wrap">
+              <div class="donut" id="donutChart">
+                <div class="donut-center" id="donutCenter">0%</div>
+              </div>
+            </div>
+          </div>
+          <div class="legend">
+            <div class="legend-item"><span class="dot income"></span> Revenus</div>
+            <div class="legend-item"><span class="dot expense"></span> Dépenses</div>
+            <div class="legend-item"><span class="dot saving"></span> Épargne</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="trashPage" class="trash-page">
+      <div class="container">
+        <div class="header-row">
+          <h1>Corbeille</h1>
+          <button id="backToMainBtn" type="button">Retour</button>
+        </div>
+
+        <div class="panel">
+          <div class="trash-actions">
+            <button id="backToDashboardBtn" type="button" class="secondary">Retour à la page principale</button>
+          </div>
+          <div class="trash-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Revenu en $</th>
+                  <th>Revenu en SL</th>
+                  <th>Revenu en FGN</th>
+                  <th>Dépense (SL)</th>
+                  <th>Épargne (SL)</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="trashBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const STORAGE_KEY = 'budget-entries-v1';
+      const TRASH_KEY = 'budget-trash-v1';
+      const AUTH_KEY = 'budget-auth-v1';
+      const ACCOUNTS_KEY = 'budget-accounts-v1';
+      const form = document.getElementById('entryForm');
+      const tableBody = document.getElementById('tableBody');
+      const mainApp = document.getElementById('mainApp');
+      const trashPage = document.getElementById('trashPage');
+      const loginScreen = document.getElementById('loginScreen');
+      const loginForm = document.getElementById('loginForm');
+      const loginMessage = document.getElementById('loginMessage');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const modeButtons = document.querySelectorAll('.mode-btn');
+      const usernameInput = document.getElementById('username');
+      const fullNameInput = document.getElementById('fullName');
+      const passwordInput = document.getElementById('password');
+      const confirmPasswordInput = document.getElementById('confirmPassword');
+      const existingAccountsSelect = document.getElementById('existingAccounts');
+      let currentMode = 'login';
+
+      function getCurrentAccount() {
+        return localStorage.getItem(AUTH_KEY) || null;
+      }
+
+      function getStorageKeyForAccount(accountName) {
+        return STORAGE_KEY + '-' + encodeURIComponent(accountName);
+      }
+
+      function getAccounts() {
+        try {
+          return JSON.parse(localStorage.getItem(ACCOUNTS_KEY)) || [];
+        } catch {
+          return [];
+        }
+      }
+
+      function saveAccounts(accounts) {
+        localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+      }
+
+      function updateExistingAccountsList() {
+        const accounts = getAccounts();
+        existingAccountsSelect.innerHTML = '<option value="">Choisir un compte</option>' +
+          accounts.map(account => `<option value="${account.username}">${account.fullName || account.username}</option>`).join('');
+        existingAccountsSelect.style.display = accounts.length ? 'block' : 'none';
+      }
+
+      function updateLoginMode() {
+        const isSignup = currentMode === 'signup';
+        fullNameInput.style.display = isSignup ? 'block' : 'none';
+        confirmPasswordInput.style.display = isSignup ? 'block' : 'none';
+        existingAccountsSelect.style.display = isSignup ? 'none' : (getAccounts().length ? 'block' : 'none');
+        loginForm.querySelector('button[type="submit"]').textContent = isSignup ? 'Créer le compte' : 'Se connecter';
+      }
+
+      modeButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          currentMode = button.dataset.mode;
+          modeButtons.forEach((btn) => btn.classList.toggle('active', btn === button));
+          updateLoginMode();
+          loginMessage.textContent = '';
+        });
+      });
+
+      existingAccountsSelect.addEventListener('change', (event) => {
+        const selectedUser = event.target.value;
+        if (selectedUser) {
+          usernameInput.value = selectedUser;
+          usernameInput.focus();
+        }
+      });
+
+      function setLoggedState(isLoggedIn) {
+        document.body.classList.toggle('logged-in', isLoggedIn);
+        if (loginScreen) {
+          loginScreen.style.display = isLoggedIn ? 'none' : 'flex';
+        }
+      }
+
+      function checkAuth() {
+        const account = getCurrentAccount();
+        setLoggedState(Boolean(account));
+        if (account) {
+          usernameInput.value = account;
+        }
+      }
+
+      function getTrashKeyForAccount(accountName) {
+        return TRASH_KEY + '-' + encodeURIComponent(accountName);
+      }
+
+      function loadEntries() {
+        const account = getCurrentAccount();
+        const storageKey = account ? getStorageKeyForAccount(account) : STORAGE_KEY;
+        try {
+          return JSON.parse(localStorage.getItem(storageKey)) || [];
+        } catch {
+          return [];
+        }
+      }
+
+      function saveEntries(entries) {
+        const account = getCurrentAccount();
+        const storageKey = account ? getStorageKeyForAccount(account) : STORAGE_KEY;
+        localStorage.setItem(storageKey, JSON.stringify(entries));
+      }
+
+      function loadTrash() {
+        const account = getCurrentAccount();
+        const storageKey = account ? getTrashKeyForAccount(account) : TRASH_KEY;
+        try {
+          return JSON.parse(localStorage.getItem(storageKey)) || [];
+        } catch {
+          return [];
+        }
+      }
+
+      function saveTrash(entries) {
+        const account = getCurrentAccount();
+        const storageKey = account ? getTrashKeyForAccount(account) : TRASH_KEY;
+        localStorage.setItem(storageKey, JSON.stringify(entries));
+      }
+
+      function formatMoney(value, currency = '$') {
+        return Number(value || 0).toLocaleString('fr-FR', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }) + ' ' + currency;
+      }
+
+      function getEntries() {
+        const entries = loadEntries();
+        return entries.sort((a, b) => new Date(a.date) - new Date(b.date));
+      }
+
+      function calculateTotals(entries) {
+        let totalRevenueDollar = 0;
+        let totalRevenueSL = 0;
+        let totalRevenueFGN = 0;
+        let totalExpense = 0;
+        let totalSaving = 0;
+
+        entries.forEach((entry) => {
+          totalRevenueDollar += Number(entry.revenueDollar || 0);
+          totalRevenueSL += Number(entry.revenueSL || 0);
+          totalRevenueFGN += Number(entry.revenueFGN || 0);
+          totalExpense += Number(entry.expense || 0);
+          totalSaving += Number(entry.dailySavings || 0);
+        });
+
+        return {
+          totalRevenueDollar,
+          totalRevenueSL,
+          totalRevenueFGN,
+          totalExpense,
+          totalSaving,
+          netBalance: totalRevenueDollar + totalRevenueSL + totalRevenueFGN - totalExpense - totalSaving
+        };
+      }
+
+      function showMainView() {
+        if (mainApp) mainApp.style.display = 'block';
+        if (trashPage) trashPage.style.display = 'none';
+      }
+
+      function showTrashView() {
+        if (mainApp) mainApp.style.display = 'none';
+        if (trashPage) trashPage.style.display = 'block';
+        renderTrash();
+      }
+
+      function renderTable() {
+        const entries = getEntries();
+        let runningDollar = 0;
+        let runningSL = 0;
+        let runningFGN = 0;
+
+        tableBody.innerHTML = entries.map((entry) => {
+          runningDollar += Number(entry.revenueDollar || 0);
+          runningSL += Number(entry.revenueSL || 0);
+          runningFGN += Number(entry.revenueFGN || 0);
+
+          return `
+            <tr>
+              <td>${entry.date}</td>
+              <td>${formatMoney(entry.revenueDollar, '$')}</td>
+              <td>${formatMoney(entry.revenueSL, 'SL')}</td>
+              <td>${formatMoney(entry.revenueFGN, 'FGN')}</td>
+              <td>${formatMoney(runningDollar, '$')}</td>
+              <td>${formatMoney(runningSL, 'SL')}</td>
+              <td>${formatMoney(runningFGN, 'FGN')}</td>
+              <td>${formatMoney(entry.expense, 'SL')}</td>
+              <td>${formatMoney(entry.dailySavings, 'SL')}</td>
+              <td><button class="action-btn" data-id="${entry.id}" type="button" title="Supprimer">×</button></td>
+            </tr>
+          `;
+        }).join('');
+
+        const totals = calculateTotals(entries);
+        document.getElementById('totalRevenueDollarValue').textContent = formatMoney(totals.totalRevenueDollar, '$');
+        document.getElementById('totalRevenueSLValue').textContent = formatMoney(totals.totalRevenueSL, 'SL');
+        document.getElementById('totalRevenueFGNValue').textContent = formatMoney(totals.totalRevenueFGN, 'FGN');
+        document.getElementById('totalExpenseValue').textContent = formatMoney(totals.totalExpense, 'SL');
+        document.getElementById('totalSavingValue').textContent = formatMoney(totals.totalSaving, 'SL');
+        document.getElementById('netBalanceValue').textContent = formatMoney(totals.netBalance, 'SL');
+
+        document.getElementById('summaryRevenueDollar').textContent = formatMoney(totals.totalRevenueDollar, '$');
+        document.getElementById('summaryRevenueSL').textContent = formatMoney(totals.totalRevenueSL, 'SL');
+        document.getElementById('summaryRevenueFGN').textContent = formatMoney(totals.totalRevenueFGN, 'FGN');
+        document.getElementById('summaryExpense').textContent = formatMoney(totals.totalExpense, 'SL');
+        document.getElementById('summarySaving').textContent = formatMoney(totals.totalSaving, 'SL');
+        document.getElementById('summaryNet').textContent = formatMoney(totals.netBalance, 'SL');
+
+        renderChart(totals);
+        renderTrash();
+      }
+
+      function renderTrash() {
+        const trash = loadTrash();
+        const trashBody = document.getElementById('trashBody');
+
+        if (!trashBody) return;
+
+        if (!trash.length) {
+          trashBody.innerHTML = '<tr><td colspan="7">Aucune ligne dans la corbeille.</td></tr>';
+          return;
+        }
+
+        trashBody.innerHTML = trash.map((entry) => `
+          <tr>
+            <td>${entry.date}</td>
+            <td>${formatMoney(entry.revenueDollar, '$')}</td>
+            <td>${formatMoney(entry.revenueSL, 'SL')}</td>
+            <td>${formatMoney(entry.revenueFGN, 'FGN')}</td>
+            <td>${formatMoney(entry.expense, 'SL')}</td>
+            <td>${formatMoney(entry.dailySavings, 'SL')}</td>
+            <td><button class="restore-btn" data-id="${entry.id}" type="button">Restaurer</button></td>
+          </tr>
+        `).join('');
+      }
+
+      function renderChart(totals) {
+        const chart = document.getElementById('chart');
+        const maxValue = Math.max(
+          totals.totalRevenueDollar,
+          totals.totalRevenueSL,
+          totals.totalRevenueFGN,
+          totals.totalExpense,
+          totals.totalSaving,
+          1
+        );
+
+        const bars = [
+          {
+            label: 'Revenu $',
+            value: totals.totalRevenueDollar,
+            type: 'income',
+            currency: '$'
+          },
+          {
+            label: 'Revenu SL',
+            value: totals.totalRevenueSL,
+            type: 'income',
+            currency: 'SL'
+          },
+          {
+            label: 'Revenu FGN',
+            value: totals.totalRevenueFGN,
+            type: 'income',
+            currency: 'FGN'
+          },
+          {
+            label: 'Dépenses SL',
+            value: totals.totalExpense,
+            type: 'expense',
+            currency: 'SL'
+          },
+          {
+            label: 'Épargne SL',
+            value: totals.totalSaving,
+            type: 'saving',
+            currency: 'SL'
+          }
+        ];
+
+        chart.innerHTML = bars.map((item) => {
+          const height = (item.value / maxValue) * 100;
+          return `
+            <div class="bar-group">
+              <div class="bar-value">${formatMoney(item.value, item.currency)}</div>
+              <div class="bar ${item.type}" style="height: ${height}%"></div>
+              <div>${item.label}</div>
+            </div>
+          `;
+        }).join('');
+
+        const donut = document.getElementById('donutChart');
+        const total = totals.totalRevenueDollar + totals.totalRevenueSL + totals.totalRevenueFGN + totals.totalExpense + totals.totalSaving;
+        const revenueTotal = totals.totalRevenueDollar + totals.totalRevenueSL + totals.totalRevenueFGN;
+        const expenseTotal = totals.totalExpense;
+        const savingTotal = totals.totalSaving;
+
+        const revenuePercent = total > 0 ? (revenueTotal / total) * 100 : 0;
+        const expensePercent = total > 0 ? (expenseTotal / total) * 100 : 0;
+        const savingPercent = total > 0 ? (savingTotal / total) * 100 : 0;
+
+        const donutGradient = `conic-gradient(
+          #16a34a 0 ${revenuePercent}%,
+          #ef4444 ${revenuePercent}% ${revenuePercent + expensePercent}%,
+          #f59e0b ${revenuePercent + expensePercent}% 100%
+        )`;
+
+        donut.style.background = donutGradient;
+        document.getElementById('donutCenter').textContent = `${Math.round(revenuePercent)}%`;
+      }
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const date = document.getElementById('date').value;
+        const revenueDollar = Number(document.getElementById('revenueDollar').value || 0);
+        const revenueSL = Number(document.getElementById('revenueSL').value || 0);
+        const revenueFGN = Number(document.getElementById('revenueFGN').value || 0);
+        const expense = Number(document.getElementById('expense').value || 0);
+        const dailySavings = Number(document.getElementById('dailySavings').value || 0);
+
+        if (!date) {
+          alert('Veuillez sélectionner une date.');
+          return;
+        }
+
+        const entries = getEntries();
+        entries.push({
+          id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
+          date,
+          revenueDollar,
+          revenueSL,
+          revenueFGN,
+          expense,
+          dailySavings
+        });
+
+        saveEntries(entries);
+        form.reset();
+        document.getElementById('date').focus();
+        renderTable();
+      });
+
+      tableBody.addEventListener('click', (event) => {
+        const button = event.target.closest('.action-btn');
+        if (!button) return;
+
+        const id = button.dataset.id;
+        const entries = getEntries();
+        const deletedEntry = entries.find((entry) => entry.id === id);
+
+        if (!deletedEntry) return;
+
+        const trashEntries = loadTrash();
+        trashEntries.push({ ...deletedEntry, deletedAt: new Date().toISOString() });
+        saveTrash(trashEntries);
+
+        saveEntries(entries.filter((entry) => entry.id !== id));
+        renderTable();
+      });
+
+      const trashBody = document.getElementById('trashBody');
+      if (trashBody) {
+        trashBody.addEventListener('click', (event) => {
+          const button = event.target.closest('.restore-btn');
+          if (!button) return;
+
+          const id = button.dataset.id;
+          const trashEntries = loadTrash();
+          const restoredEntry = trashEntries.find((entry) => entry.id === id);
+
+          if (!restoredEntry) return;
+
+          const entries = getEntries();
+          entries.push({ ...restoredEntry });
+          saveEntries(entries);
+
+          saveTrash(trashEntries.filter((entry) => entry.id !== id));
+          renderTable();
+          renderTrash();
+        });
+      }
+
+      document.getElementById('trashBtn').addEventListener('click', showTrashView);
+      document.getElementById('backToMainBtn').addEventListener('click', showMainView);
+      document.getElementById('backToDashboardBtn').addEventListener('click', showMainView);
+
+      loginForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value.trim();
+        const fullName = fullNameInput.value.trim();
+        const accounts = getAccounts();
+
+        if (currentMode === 'signup') {
+          if (!fullName || !username || !password) {
+            loginMessage.textContent = 'Veuillez remplir tous les champs.';
+            return;
+          }
+
+          if (password !== confirmPasswordInput.value.trim()) {
+            loginMessage.textContent = 'Les mots de passe ne correspondent pas.';
+            return;
+          }
+
+          const exists = accounts.some((account) => account.username.toLowerCase() === username.toLowerCase());
+          if (exists) {
+            loginMessage.textContent = 'Ce nom d’utilisateur existe déjà.';
+            return;
+          }
+
+          accounts.push({ username, password, fullName });
+          saveAccounts(accounts);
+          localStorage.setItem(AUTH_KEY, username);
+          loginMessage.textContent = '';
+          setLoggedState(true);
+          updateExistingAccountsList();
+          return;
+        }
+
+        if (!username || !password) {
+          loginMessage.textContent = 'Veuillez entrer votre identifiant et votre mot de passe.';
+          return;
+        }
+
+        const matchingAccount = accounts.find((account) =>
+          account.username.toLowerCase() === username.toLowerCase() && account.password === password
+        );
+
+        if (matchingAccount) {
+          localStorage.setItem(AUTH_KEY, username);
+          loginMessage.textContent = '';
+          setLoggedState(true);
+          return;
+        }
+
+        if (username === 'admin' && password === 'admin123') {
+          localStorage.setItem(AUTH_KEY, username);
+          loginMessage.textContent = '';
+          setLoggedState(true);
+          return;
+        }
+
+        loginMessage.textContent = 'Identifiant ou mot de passe incorrect.';
+      });
+
+      logoutBtn.addEventListener('click', () => {
+        localStorage.removeItem(AUTH_KEY);
+        setLoggedState(false);
+        document.getElementById('loginForm').reset();
+        document.getElementById('username').focus();
+      });
+
+      document.getElementById('date').valueAsDate = new Date();
+      fullNameInput.value = 'Asma';
+      updateExistingAccountsList();
+      updateLoginMode();
+      checkAuth();
+      showMainView();
+      renderTable();
+    </script>
+  </body>
+</html>

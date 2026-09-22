@@ -807,24 +807,26 @@
         let totalExpense = 0;
         let totalSaving = 0;
         let totalWithdrawn = 0;
+        let baseSaving = 0;
 
         entries.forEach((entry) => {
           totalRevenueDollar += Number(entry.revenueDollar || 0);
           totalRevenueSL += Number(entry.revenueSL || 0);
           totalRevenueFGN += Number(entry.revenueFGN || 0);
           totalExpense += Number(entry.expense || 0);
+          baseSaving += Number(entry.dailySavings || 0);
           totalSaving += Number(entry.dailySavings || 0) - Number(entry.withdrawnAmount || 0);
           totalWithdrawn += Number(entry.withdrawnAmount || 0);
         });
 
-        const netRevenueSL = Math.max(0, totalRevenueSL - totalExpense - totalSaving);
-        
+        const netRevenueSL = Math.max(0, totalRevenueSL - totalExpense - baseSaving);
+
         return {
           totalRevenueDollar,
           totalRevenueSL,
           totalRevenueFGN,
           totalExpense,
-          totalSaving,
+          totalSaving: Math.max(0, totalSaving),
           totalWithdrawn,
           netRevenueSL,
           netBalance: totalRevenueDollar + netRevenueSL + totalRevenueFGN

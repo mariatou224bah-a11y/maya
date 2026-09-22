@@ -528,6 +528,10 @@
                 <label for="dailySavings">Épargne quotidienne</label>
                 <input id="dailySavings" type="number" min="0" step="0.01" placeholder="0" />
               </div>
+              <div class="field">
+                <label for="withdrawnAmount">Retrait (SL)</label>
+                <input id="withdrawnAmount" type="number" min="0" step="0.01" placeholder="0" />
+              </div>
             </div>
 
             <div class="btn-row">
@@ -809,7 +813,7 @@
           totalRevenueSL += Number(entry.revenueSL || 0);
           totalRevenueFGN += Number(entry.revenueFGN || 0);
           totalExpense += Number(entry.expense || 0);
-          totalSaving += Number(entry.dailySavings || 0);
+          totalSaving += Number(entry.dailySavings || 0) - Number(entry.withdrawnAmount || 0);
           totalWithdrawn += Number(entry.withdrawnAmount || 0);
         });
 
@@ -862,7 +866,6 @@
               <td>${formatMoney(entry.dailySavings, 'SL')}</td>
               <td>${formatMoney(entry.withdrawnAmount || 0, 'SL')}</td>
               <td>
-                <button class="withdraw-btn" data-id="${entry.id}" type="button">Retrait</button>
                 <button class="action-btn" data-id="${entry.id}" type="button" title="Supprimer">×</button>
               </td>
             </tr>
@@ -995,6 +998,7 @@
         const revenueFGN = Number(document.getElementById('revenueFGN').value || 0);
         const expense = Number(document.getElementById('expense').value || 0);
         const dailySavings = Number(document.getElementById('dailySavings').value || 0);
+        const withdrawnAmount = Number(document.getElementById('withdrawnAmount').value || 0);
 
         if (!date) {
           alert('Veuillez sélectionner une date.');
@@ -1002,6 +1006,15 @@
         }
 
         const entries = getEntries();
+        const totalAvailableSavings = entries.reduce((sum, entry) => {
+          return sum + Number(entry.dailySavings || 0) - Number(entry.withdrawnAmount || 0);
+        }, 0);
+
+        if (withdrawnAmount > totalAvailableSavings + dailySavings) {
+          alert('Le retrait ne peut pas dépasser l’épargne totale disponible.');
+          return;
+        }
+
         entries.push({
           id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
           date,
@@ -1010,7 +1023,7 @@
           revenueFGN,
           expense,
           dailySavings,
-          withdrawnAmount: 0
+          withdrawnAmount
         });
 
         saveEntries(entries);
@@ -1020,23 +1033,6 @@
       });
 
       tableBody.addEventListener('click', (event) => {
-        const withdrawButton = event.target.closest('.withdraw-btn');
-        if (withdrawButton) {
-          const id = withdrawButton.dataset.id;
-          const entries = getEntries();
-          const entry = entries.find((item) => item.id === id);
-
-          if (!entry) return;
-
-          const withdrawnAmount = Number(entry.dailySavings || 0);
-          entry.dailySavings = 0;
-          entry.withdrawnAmount = Number(entry.withdrawnAmount || 0) + withdrawnAmount;
-
-          saveEntries(entries);
-          renderTable();
-          return;
-        }
-
         const button = event.target.closest('.action-btn');
         if (!button) return;
 

@@ -545,10 +545,6 @@
             <div class="label">Total épargne (SL)</div>
             <div class="value" id="totalSavingValue">0.00 SL</div>
           </div>
-          <div class="stat-card net">
-            <div class="label">Solde net (SL)</div>
-            <div class="value" id="netBalanceValue">0.00 SL</div>
-          </div>
         </div>
 
         <div class="panel">
@@ -584,7 +580,6 @@
                   <th>Total revenus en FGN</th>
                   <th>Total dépenses (SL)</th>
                   <th>Total épargne (SL)</th>
-                  <th>Solde net (SL)</th>
                 </tr>
               </thead>
               <tbody>
@@ -594,7 +589,6 @@
                   <td id="summaryRevenueFGN">0.00 FGN</td>
                   <td id="summaryExpense">0.00 SL</td>
                   <td id="summarySaving">0.00 SL</td>
-                  <td id="summaryNet">0.00 SL</td>
                 </tr>
               </tbody>
             </table>
@@ -802,13 +796,16 @@
           totalSaving += Number(entry.dailySavings || 0);
         });
 
+        const netRevenueSL = Math.max(0, totalRevenueSL - totalExpense - totalSaving);
+
         return {
           totalRevenueDollar,
           totalRevenueSL,
           totalRevenueFGN,
           totalExpense,
           totalSaving,
-          netBalance: totalRevenueDollar + totalRevenueSL + totalRevenueFGN - totalExpense - totalSaving
+          netRevenueSL,
+          netBalance: totalRevenueDollar + netRevenueSL + totalRevenueFGN
         };
       }
 
@@ -852,18 +849,16 @@
 
         const totals = calculateTotals(entries);
         document.getElementById('totalRevenueDollarValue').textContent = formatMoney(totals.totalRevenueDollar, '$');
-        document.getElementById('totalRevenueSLValue').textContent = formatMoney(totals.totalRevenueSL, 'SL');
+        document.getElementById('totalRevenueSLValue').textContent = formatMoney(totals.netRevenueSL, 'SL');
         document.getElementById('totalRevenueFGNValue').textContent = formatMoney(totals.totalRevenueFGN, 'FGN');
         document.getElementById('totalExpenseValue').textContent = formatMoney(totals.totalExpense, 'SL');
         document.getElementById('totalSavingValue').textContent = formatMoney(totals.totalSaving, 'SL');
-        document.getElementById('netBalanceValue').textContent = formatMoney(totals.netBalance, 'SL');
 
         document.getElementById('summaryRevenueDollar').textContent = formatMoney(totals.totalRevenueDollar, '$');
-        document.getElementById('summaryRevenueSL').textContent = formatMoney(totals.totalRevenueSL, 'SL');
+        document.getElementById('summaryRevenueSL').textContent = formatMoney(totals.netRevenueSL, 'SL');
         document.getElementById('summaryRevenueFGN').textContent = formatMoney(totals.totalRevenueFGN, 'FGN');
         document.getElementById('summaryExpense').textContent = formatMoney(totals.totalExpense, 'SL');
         document.getElementById('summarySaving').textContent = formatMoney(totals.totalSaving, 'SL');
-        document.getElementById('summaryNet').textContent = formatMoney(totals.netBalance, 'SL');
 
         renderChart(totals);
         renderTrash();
@@ -897,7 +892,7 @@
         const chart = document.getElementById('chart');
         const maxValue = Math.max(
           totals.totalRevenueDollar,
-          totals.totalRevenueSL,
+          totals.netRevenueSL,
           totals.totalRevenueFGN,
           totals.totalExpense,
           totals.totalSaving,
@@ -913,7 +908,7 @@
           },
           {
             label: 'Revenu SL',
-            value: totals.totalRevenueSL,
+            value: totals.netRevenueSL,
             type: 'income',
             currency: 'SL'
           },
@@ -949,8 +944,8 @@
         }).join('');
 
         const donut = document.getElementById('donutChart');
-        const total = totals.totalRevenueDollar + totals.totalRevenueSL + totals.totalRevenueFGN + totals.totalExpense + totals.totalSaving;
-        const revenueTotal = totals.totalRevenueDollar + totals.totalRevenueSL + totals.totalRevenueFGN;
+        const total = totals.totalRevenueDollar + totals.netRevenueSL + totals.totalRevenueFGN + totals.totalExpense + totals.totalSaving;
+        const revenueTotal = totals.totalRevenueDollar + totals.netRevenueSL + totals.totalRevenueFGN;
         const expenseTotal = totals.totalExpense;
         const savingTotal = totals.totalSaving;
 

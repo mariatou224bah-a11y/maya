@@ -292,6 +292,18 @@
         font-weight: 700;
       }
 
+      .withdraw-btn {
+        border: none;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+        padding: 7px 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 700;
+        margin-right: 6px;
+      }
+
       .mini-table {
         overflow-x: auto;
       }
@@ -561,6 +573,7 @@
                   <th>Total revenu en FGN</th>
                   <th>Dépense (SL)</th>
                   <th>Épargne quotidienne (SL)</th>
+                  <th>Retrait</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -580,6 +593,7 @@
                   <th>Total revenus en FGN</th>
                   <th>Total dépenses (SL)</th>
                   <th>Total épargne (SL)</th>
+                  <th>Total retrait (SL)</th>
                 </tr>
               </thead>
               <tbody>
@@ -589,6 +603,7 @@
                   <td id="summaryRevenueFGN">0.00 FGN</td>
                   <td id="summaryExpense">0.00 SL</td>
                   <td id="summarySaving">0.00 SL</td>
+                  <td id="summaryWithdrawn">0.00 SL</td>
                 </tr>
               </tbody>
             </table>
@@ -787,6 +802,7 @@
         let totalRevenueFGN = 0;
         let totalExpense = 0;
         let totalSaving = 0;
+        let totalWithdrawn = 0;
 
         entries.forEach((entry) => {
           totalRevenueDollar += Number(entry.revenueDollar || 0);
@@ -794,16 +810,18 @@
           totalRevenueFGN += Number(entry.revenueFGN || 0);
           totalExpense += Number(entry.expense || 0);
           totalSaving += Number(entry.dailySavings || 0);
+          totalWithdrawn += Number(entry.withdrawnAmount || 0);
         });
 
         const netRevenueSL = Math.max(0, totalRevenueSL - totalExpense - totalSaving);
-
+        
         return {
           totalRevenueDollar,
           totalRevenueSL,
           totalRevenueFGN,
           totalExpense,
           totalSaving,
+          totalWithdrawn,
           netRevenueSL,
           netBalance: totalRevenueDollar + netRevenueSL + totalRevenueFGN
         };
@@ -842,7 +860,11 @@
               <td>${formatMoney(runningFGN, 'FGN')}</td>
               <td>${formatMoney(entry.expense, 'SL')}</td>
               <td>${formatMoney(entry.dailySavings, 'SL')}</td>
-              <td><button class="action-btn" data-id="${entry.id}" type="button" title="Supprimer">×</button></td>
+              <td>${formatMoney(entry.withdrawnAmount || 0, 'SL')}</td>
+              <td>
+                <button class="withdraw-btn" data-id="${entry.id}" type="button">Retrait</button>
+                <button class="action-btn" data-id="${entry.id}" type="button" title="Supprimer">×</button>
+              </td>
             </tr>
           `;
         }).join('');
@@ -859,6 +881,7 @@
         document.getElementById('summaryRevenueFGN').textContent = formatMoney(totals.totalRevenueFGN, 'FGN');
         document.getElementById('summaryExpense').textContent = formatMoney(totals.totalExpense, 'SL');
         document.getElementById('summarySaving').textContent = formatMoney(totals.totalSaving, 'SL');
+        document.getElementById('summaryWithdrawn').textContent = formatMoney(totals.totalWithdrawn, 'SL');
 
         renderChart(totals);
         renderTrash();
@@ -986,7 +1009,8 @@
           revenueSL,
           revenueFGN,
           expense,
-          dailySavings
+          dailySavings,
+          withdrawnAmount: 0
         });
 
         saveEntries(entries);
@@ -996,6 +1020,23 @@
       });
 
       tableBody.addEventListener('click', (event) => {
+        const withdrawButton = event.target.closest('.withdraw-btn');
+        if (withdrawButton) {
+          const id = withdrawButton.dataset.id;
+          const entries = getEntries();
+          const entry = entries.find((item) => item.id === id);
+
+          if (!entry) return;
+
+          const withdrawnAmount = Number(entry.dailySavings || 0);
+          entry.dailySavings = 0;
+          entry.withdrawnAmount = Number(entry.withdrawnAmount || 0) + withdrawnAmount;
+
+          saveEntries(entries);
+          renderTable();
+          return;
+        }
+
         const button = event.target.closest('.action-btn');
         if (!button) return;
 
